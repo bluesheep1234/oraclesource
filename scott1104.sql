@@ -57,3 +57,37 @@ SELECT * FROM emp WHERE deptno=30 OR job='CLERK';
 
 -- 부서번호가 20이거나, 사원직책이 SALESMAN 정보 조회
 SELECT * FROM emp WHERE deptno=20 OR job='SALESMAN';
+
+-- 연산자를 이용한 조회
+
+-- sal*12한 금액이 36000인 데이터 조회
+SELECT * FROM emp WHERE sal*12=36000;
+
+-- 관계연산자 : >, <, >=, <=
+SELECT * FROM emp WHERE sal > 3000;
+SELECT * FROM emp WHERE sal >= 3000;
+SELECT * FROM emp WHERE ename >= 'F';
+
+-- 논리연산자 : AND, OR 
+-- 급여가 2500이상이고 직업이 ANALYST인 사원정보 조회
+SELECT * FROM emp WHERE sal >= 2500 AND job='ANALYST';
+
+-- 직무가 MANAGER, SALESMAN, CLERK 인 사원정보 조회
+SELECT * FROM emp WHERE job='MANAGER' OR job='SALESMAN' OR job='CLERK';
+
+-- 등가연산자 : 양쪽 항목이 같은지 검사
+-- SAL이 3000이 아닌 사원정보 출력
+SELECT * FROM emp WHERE sal!=3000;
+SELECT * FROM emp WHERE sal<>3000;
+SELECT * FROM emp WHERE sal^=3000; 
+
+-- IN 과 NOT IN 연산자
+-- 직무가 MANAGER, SALESMAN, CLERK 인 사원정보 조회
+SELECT * FROM emp WHERE job IN('MANAGER','SALESMAN','CLERK');
+
+SELECT * FROM emp WHERE job!='MANAGER' AND job!='SALESMAN' AND job!='CLERK';
+SELECT * FROM emp WHERE job NOT IN('MANAGER','SALESMAN','CLERK');
+
+-- IN을 사용하여 부서 번호가 10번 20번인 사원 정보를 조회
+SELECT * FROM emp WHERE deptno IN('10','20');
+
