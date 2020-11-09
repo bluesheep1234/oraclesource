@@ -117,3 +117,159 @@ WHERE job_id IN('AD_PRES','PU_CLERK');
 SELECT employee_id, CONCAT(first_name,CONCAT(' ',last_name)),department_id, job_id
 FROM employees
 WHERE job_id IN('AD_PRES','PU_CLERK');
+
+-- [실습 3] Oracle_04(오라클 함수) 슬라이드21
+SELECT last_name, salary, 
+       CASE
+           WHEN salary < 2000 THEN 0
+           WHEN(salary < 4000) THEN 0.09
+           WHEN(salary < 6000) THEN 0.2
+           WHEN(salary < 8000) THEN 0.3
+           WHEN(salary < 10000) THEN 0.4
+           WHEN(salary < 12000) THEN 0.42
+           WHEN(salary < 14000) THEN 0.44
+           ELSE 0.45
+        END AS TAX_RATE
+FROM employees WHERE department_id=80;
+
+
+SELECT last_name, salary,
+       DECODE(TRUNC(salary/2000,0), 
+                    0,0.00,
+                    1,0.09,
+                    2,0.20,
+                    3,0.30,
+                    4,0.40,
+                    5,0.42,
+                    6,0.44,
+                    0.45)AS TAX_RATE
+FROM employees WHERE department_id=80;
+
+-- 다중행 함수 연습
+-- 회사 내의 연봉 및 최소 연봉 차이를 조회
+SELECT MAX(salary)-MIN(salary) FROM employees;
+
+--매니저로 근무하는 사원들의 인원 수 조회
+SELECT COUNT(DISTINCT manager_id) FROM employees;
+
+-- 부서별 직원의 수를 구하여 부서번호의 오름차순으로 출력
+SELECT department_id,COUNT(DISTINCT employee_id) FROM employees GROUP BY department_id ORDER BY department_id;
+
+-- 부서별 급여의 평균 연봉을 출력하고, 평균 연봉은 정수만 나오게 하며
+-- 부서 번호별 오름차순으로 정렬
+SELECT department_id,ROUND(AVG(salary),0) FROM employees GROUP BY department_id ORDER BY department_id;
+
+-- 동일한 직업을 가진 사원들의 사원수를 조회
+SELECT job_id,COUNT(employee_id) FROM employees GROUP BY job_id;
+
+
+
+-- JOIN 실습
+-- 자신의 담당 매니저의 고용일보다 빠른 입사자를 찾아 HIRE_DATE, LAST_NAME, MANAGER_ID를
+-- 출력하시오(EMPLOYEES SELF JOIN) => 37행
+SELECT e1.hire_date, e1.last_name, e1.hire_date AS 내입사일,
+       e1.manager_id, e2.hire_date AS 매니저입사일
+FROM employees e1, employees e2
+WHERE e1.manager_id = e2.employee_id AND e1.hire_date < e2.hire_date;
+
+
+-- 도시 이름이 T자로 시작하는 지역에 사는 사원들의 사번, LAST_NAME, 부서번호 조회
+-- (EMPLOYEES의 DEPARTMENT_ID와 DEPARTMENTS의 DEPARTMENT_ID 연결 후 DEPARTMENTS의 
+-- LOCATION_ID와 LOCATIONS의 LOCATION_ID 조인)=>2행
+SELECT employee_id, last_name, d.department_id
+FROM employees e, departments d, locations l
+WHERE e.department_id = d.department_id AND d.location_id = l.location_id
+      AND l.city LIKE 'T%';
+
+
+-- 위치 ID가 1700인 동일한 사원들의 EMPLOYEE_ID LAST_NAME, DEPARTMENT_ID, SALARY 조회
+-- (EMPLOYEES와 DEPARTMENTS 조인)=>18행
+SELECT e.employee_id, e.last_name, d.department_id, e.salary
+FROM employees e, departments d
+WHERE e.department_id=d.department_id AND d.location_id=1700;
+
+-- DEPARTMENT_NAME, LOCATION_ID, 각 부서별 사원수, 각 부서별 평균 연봉 조회
+-- (EMPLOYEES, DEPARTMENT 조인=>11행
+SELECT d.department_name, d.location_id, COUNT(employee_id), ROUND(AVG(salary),2)
+FROM employees e, departments d
+WHERE e.department_id=d.department_id
+GROUP BY d.department_name, d.location_id;
+
+-- EXECUTIVE 부서에 근무하는 모든 사원들의 DEPARTMENT_ID, LAST_NAME, JOB_ID 조회
+-- (EMPLOYEES, DEPARTMENT 조인)
+SELECT d.department_id, last_name, job_id
+FROM employees e, departments d
+WHERE e.department_id=d.department_id
+AND d.department_name='Executive';
+
+-- 기존의 작업을 여전히 가지고 있는 사원들의 사번 및 JOB_ID 조회 
+-- (EMPLOYEES, JOB_HISTORY 조인)
+SELECT e.employee_id, e.job_id
+FROM employees e, job_history j
+WHERE e.employee_id=j.employee_id AND e.job_id=j.job_id; 
+
+-- 각 사원별 소속 부서에서 자신보다 늦게 고용되었으나 보다 많은 연봉을 받는 사원이 존재하는
+-- 모든 사원들의 LAST_NAME을 조회
+SELECT e1.department_id, e1.first_name || ' ' || e1.last_name AS NAME
+FROM employees e1, employees e2
+WHERE e1.department_id=e2.department_id 
+AND e1.hire_date < e2.hire_date 
+AND e1.salary < e2.salary;
+
+-- 서브쿼리 실습
+
+-- 회사 전체 평균 연봉보다 더 많이 받는 사원들의 last_name, salary조회
+SELECT last_name, salary 
+FROM employees 
+WHERE salary > (SELECT AVG(salary) FROM employees); 
+
+-- last_name에 u가 포함되는 사원들과 동일 부서에 근무하는 사원들의 employee_id, last_name 조회
+SELECT employee_id, last_name
+FROM employees 
+WHERE department_id IN (SELECT DISTINCT department_id FROM employees WHERE last_name LIKE '%u%'); 
+
+-- NOT EXISTS 연산자를 사용하여 매니저가 아닌 사원 이름을 조회
+SELECT first_name||' '||last_name AS Name
+FROM employees e1
+WHERE NOT EXISTS (SELECT DISTINCT manager_id 
+                  FROM employees e2 
+                  WHERE e1.employee_id = e2.manager_id); 
+                  
+                  
+SELECT first_name||' '||last_name AS Name
+FROM employees e1
+WHERE e1.employee_id NOT IN (SELECT DISTINCT manager_id 
+                             FROM employees e2 
+                             WHERE e1.employee_id = e2.manager_id);                   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

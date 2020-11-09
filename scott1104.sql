@@ -349,3 +349,101 @@ SELECT empno, ename, job, sal, DECODE(JOB,
                                 ELSE SAL*1.03
                             END AS UPSAL
  FROM EMP;
+ 
+ 
+ 
+ 
+  SELECT empno, ename, job, sal, CASE
+                                 WHEN COMM IS NULL THEN '해당사항없음'
+                                 WHEN COMM=0 THEN '수당없음'
+                                 WHEN COMM>0 THEN '수당 : ' || COMM
+                                END AS COMM_TEXT FROM EMP;
+                                
+                                
+                                
+-- [실습 1] Oracle_04(오라클 함수) 슬라이드18
+SELECT empno, ename, sal, TRUNC(sal/21.5,2) AS DAY_PAY, ROUND(sal/21.5/8,1) AS TIME_PAY
+FROM emp;
+
+-- [실습 2] Oracle_04(오라클 함수) 슬라이드19
+SELECT empno, ename, hiredate, TO_DATE(NEXT_DAY(ADD_MONTHS(hiredate,3),'월요일'),'YYYY-MM-DD') AS R_JOB, NVL(TO_CHAR(comm),'N/A')
+FROM emp; 
+
+-- [실습 3] Oracle_04(오라클 함수) 슬라이드20
+SELECT SUBSTR(TO_CHAR(mgr),1,2) FROM emp;
+
+SELECT empno, ename, mgr, 
+                     DECODE(SUBSTR(TO_CHAR(mgr),1,2),
+                     null, '0000',
+                     '75', '5555',
+                     '76', '6666',
+                     '77', '7777',
+                     '78', '8888',
+                     TO_CHAR(mgr)) AS CHG_MGR
+FROM emp;
+
+-- [실습 1] Oracle_04(오라클 함수) 슬라이드28
+SELECT deptno, FLOOR(AVG(sal)) AS AVG, MAX(sal) AS MAX_SAL,MIN(sal) AS MIN_SAL, COUNT(empno) AS CNT
+FROM emp
+GROUP BY deptno;
+-- [실습 2] Oracle_04(오라클 함수) 슬라이드28
+SELECT job, COUNT(empno)
+FROM emp
+GROUP BY job
+HAVING COUNT(job)>=3;
+
+-- [실습 3] Oracle_04(오라클 함수) 슬라이드29
+SELECT TO_CHAR(hiredate,'YYYY')AS hire_year, deptno, COUNT(TO_CHAR(hiredate,'YYYY')) AS CNT
+FROM emp
+GROUP BY deptno, TO_CHAR(hiredate, 'YYYY')
+ORDER BY TO_CHAR(hiredate, 'YYYY') DESC;
+
+SELECT TO_CHAR(hiredate,'YYYY')AS hire_year, deptno, COUNT(*) AS CNT
+FROM emp
+GROUP BY deptno, TO_CHAR(hiredate, 'YYYY')
+ORDER BY TO_CHAR(hiredate, 'YYYY') DESC;
+
+-- PPT(19) 연습문제
+
+-- 전체 사원 중 ALLEN과 같은 직책인 사원들의 사원정보, 부서 정보를 출력하는 SQL문을 작성하시오
+SELECT e.job, e.empno, e.ename, e.sal, d.deptno, d.dname
+FROM emp e, dept d
+WHERE e.deptno = d.deptno AND e.job IN (SELECT job FROM emp WHERE ename = 'ALLEN');
+
+-- 전체 사원의 평균 급여보다 높은 급여를 받는 사원들의 사원정보, 부서정보, 급여 등급 정보를 출력하시오
+-- (단, 출력할 때 급여가 많은 순으로 정렬하되 급여가 같을 경우에는 사원 번호를 기준으로 오름차순 하시오)
+SELECT e.empno, e.ename, e.hiredate,d.loc,e.sal,s.grade
+FROM emp e, dept d, salgrade s
+WHERE e.deptno = d.deptno AND e.sal between s.losal AND s.hisal AND e.sal>
+                 (SELECT AVG(sal) FROM emp)
+ORDER BY e.sal desc, e.empno ASC;
+
+
+
+-- PPT(23) 연습문제
+
+-- 10번 부서에 근무하는 사원 중 30번 부서에는 존재하지 않는 직책을 가진 사원들의 사원정보, 
+-- 부서 정보를 다음과 같이 출력하는 SQL문을 작성하시오.
+SELECT e.empno, e.ename, e.job, d.deptno, d.dname, d.loc
+FROM emp e, dept d
+WHERE e.deptno = d.deptno AND e.job NOT IN (SELECT DISTINCT job FROM emp WHERE deptno=30)
+AND e.deptno=10; 
+
+-- 직책이 SALESMAN인 사람들의 최고 급여보다 높은 급여를 받는 사원들의 사원정보, 급여등급 정보를
+-- 출력하는 SQL문을 작성하시오.
+-- (단, 서브쿼리를 활용할 때 다중행 함수를 사용하는 방법과 사용하지 않는 방법을 통해 사원 번호를 기준으로
+-- 오름차순 정렬하여 출력하시오)
+
+-- 단일행
+SELECT empno,ename, sal
+FROM emp 
+WHERE sal > (SELECT MAX(sal) FROM  emp WHERE job = 'SALESMAN');
+--다중행
+SELECT empno,ename, sal
+FROM emp 
+WHERE sal > ALL(SELECT sal FROM  emp WHERE job = 'SALESMAN');
+
+-- 스칼라 사용
+SELECT empno,ename, sal, (SELECT grade FROM salgrade WHERE e.sal BETWEEN losal AND hisal) AS grade
+FROM emp 
+WHERE sal > (SELECT MAX(sal) FROM  emp WHERE job = 'SALESMAN');
